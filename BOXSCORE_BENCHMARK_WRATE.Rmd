@@ -1,0 +1,29 @@
+---
+title: "BOXSCORE_BENCHMARK_WRATE"
+author: "Sean Kerr"
+date: "2023-06-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(hoopR)
+box <- load_nba_player_box() %>% filter(team_short_display_name != 'Team LeBron' & team_short_display_name != 'Team Giannis') %>% filter(did_not_play == FALSE) %>% filter(is.na(minutes) == FALSE)
+
+sched <- load_nba_schedule() %>% filter(attendance > 0)
+
+find_wrate <- function(df, statement){
+  
+  wrate_box <- df %>% left_join(sched, by=c('game_id'='id')) %>% mutate(win = ifelse(team_short_display_name==home_name & home_winner==TRUE | team_short_display_name==away_name & home_winner==FALSE, TRUE, FALSE))
+  
+  wins <- round(sum(wrate_box$win, na.rm=TRUE), 0)
+  losses <- round(nrow(wrate_box) - wins, 0)
+  win_pct <- round(wins / (wins+losses), 3)
+  
+  return(data.frame('benchmark' = statement, 'wins'=wins, 'losses'=losses, 'win_pct'=win_pct))
+  
+}
+```

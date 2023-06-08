@@ -1,0 +1,65 @@
+---
+title: "PPP"
+author: "Sean Kerr"
+date: "2023-06-02"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(hoopR)
+library(tidyverse)
+library(sportyR)
+library(plotly)
+
+pbp <- load_nba_pbp(seasons = most_recent_nba_season()) %>% filter(away_team_name != 'Team Giannis' & home_team_name != 'Team LeBron')  %>% left_join(players_, by = c('athlete_id_1'='athlete_id'))
+
+box <- load_nba_player_box() %>% filter(team_short_display_name != 'Team LeBron' & team_short_display_name != 'Team Giannis') %>% filter(did_not_play == FALSE) %>% filter(is.na(minutes) == FALSE)
+
+players_ <- box %>% select(athlete_display_name, team_name, athlete_id, athlete_position_abbreviation) %>% unique()
+court <- geom_basketball('nba', display_range = 'defense', x_trans = 41, y_trans = 25, color_updates = list(plot_background = 'white', court_apron = 'white', two_point_range = 'white', defensive_half_court = 'white', painted_area = 'white', center_circle_fill = 'white', free_throw_circle_fill = 'white', substitution_line='white'))
+
+shot_types <- pbp$type_text %>% unique()
+
+find_jumpshot <- function(type){
+  if(str_detect(type, 'Jump Shot') == TRUE){
+    return(type)
+  }
+}
+
+
+find_fts <- function(type){
+  if(str_detect(type, 'Free Throw') == TRUE){
+    return(type)
+  }
+}
+
+free_throws <- unlist(map(shot_types, find_fts)) %>% unique()
+jump_shots <- unlist(map(shot_types, find_jumpshot) %>% unique())
+
+find_finishes <- function(type){
+  if(str_detect(type, 'Layup')==TRUE){
+    return(type)
+  }
+  if(str_detect(type, 'Dunk')==TRUE){
+    return(type)
+  }
+}
+  
+finishes <- unlist(map(shot_types, find_finishes) %>% unique())
+
+team_ppp <- pbp %>% filter(shooting_play==TRUE) %>% group_by(team_name) %>% summarize(TEAM_PPP = round(sum(score_value) / n(), 3)) %>% arrange(-TEAM_PPP)
+
+jumpshot_ppp_value_added <- pbp %>% filter(type_text %in% jump_shots) %>% group_by(athlete_display_name, team_name) %>% summarize(PPP = round(sum(score_value) / n(), 3), JUMP_SHOTS = n()) %>% filter(JUMP_SHOTS > 400) %>% left_join(team_ppp, by=c('team_name'='team_name')) %>% mutate(value_added = PPP-TEAM_PPP) %>% arrange(-value_added) %>% select(athlete_display_name, JUMP_SHOTS, team_name, TEAM_PPP, PPP, value_added)
+
+
+layup_dunk_ppp_value_added <- pbp %>% filter(type_text %in% finishes) %>% group_by(athlete_display_name, team_name) %>% summarize(PPP = round(sum(score_value) / n(), 3), finishes = n()) %>% filter(finishes > 300) %>% arrange(-PPP) %>% left_join(team_ppp, by=c('team_name'='team_name')) %>% mutate(value_added = PPP-TEAM_PPP) %>% arrange(-value_added)
+
+
+```
+
+

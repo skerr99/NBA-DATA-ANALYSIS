@@ -1,0 +1,29 @@
+---
+title: "PPG, STD, TS Plot"
+author: "Sean Kerr"
+date: "2023-06-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(hoopR)
+library(plotly)
+box <- load_nba_player_box() %>% filter(team_short_display_name != 'Team LeBron' & team_short_display_name != 'Team Giannis') %>% filter(did_not_play == FALSE) %>% filter(is.na(minutes) == FALSE)
+x <- box %>% group_by(athlete_display_name) %>% summarize(ppg = sum(points) / n(), std = sd(points), ts = (0.5*sum(points)) / (sum(field_goals_attempted) + 0.475 * sum(free_throws_attempted))) %>% filter(ppg > 0) %>% na.omit() %>% mutate(ts_rank = cut(ts, breaks = c(0, .565, .611, 3), labels = c('low', 'medium', 'high')))
+
+colnames(x)[1] <-  'Player'
+
+xx <- x %>% ggplot(aes(x=ppg, y=std, label=Player, color = ts_rank)) + geom_point(size=2, alpha=.5) +labs(x = 'Points per Game', y = 'Standard Deviation', color='TS% Rank', title = 'Relationship between Points per Game, Standard Devision, and Scoring Effiency', subtitle='Orange lines show median amounts of PPG and Std. Dev') + theme_classic() + geom_vline(xintercept=x %>% pull(ppg) %>% median(), color='orange') + geom_hline(yintercept= x %>% pull(std) %>% median(), color='orange')
+
+
+ggplotly(xx, tooltip = 'Player') %>% 
+  layout(title = list(text = paste0('Relationship between Points per Game, Standard Devision, and Scoring Effiency',
+                                    '<br>',
+                                    '<sup>',
+                                    'Orange lines denote median values of PPG and Std. Dev',
+                                    '</sup>')))
+```
