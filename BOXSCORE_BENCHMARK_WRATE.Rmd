@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r}
+#load packages
 library(hoopR)
 box <- load_nba_player_box() %>% filter(team_short_display_name != 'Team LeBron' & team_short_display_name != 'Team Giannis') %>% filter(did_not_play == FALSE) %>% filter(is.na(minutes) == FALSE)
 
