@@ -15,7 +15,7 @@ library(hoopR)
 library(tidyverse)
 library(sportyR)
 library(plotly)
-
+jjbjbjbjbjbjbjbjbjbjbjbjb
 pbp <- load_nba_pbp(seasons = most_recent_nba_season()) %>% filter(away_team_name != 'Team Giannis' & home_team_name != 'Team LeBron')  %>% left_join(players_, by = c('athlete_id_1'='athlete_id'))
 
 box <- load_nba_player_box() %>% filter(team_short_display_name != 'Team LeBron' & team_short_display_name != 'Team Giannis') %>% filter(did_not_play == FALSE) %>% filter(is.na(minutes) == FALSE)
