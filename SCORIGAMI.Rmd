@@ -1,0 +1,42 @@
+---
+title: "SCORIGAMI"
+author: "Sean Kerr"
+date: "2023-07-24"
+output: html_document
+---
+
+```{r}
+library(hoopR)
+library(tidyverse)
+library(plotly)
+
+create_gami <- function(season){
+sched <- load_nba_schedule(seasons = season) %>% select(id, attendance, game_date, home_name, home_score, away_name, away_score, home_winner) %>% filter(home_score != 0 | away_score != 0)
+num_games = nrow(sched)
+gami <- sched %>% mutate(winning_score = ifelse(home_score>away_score, home_score, away_score), losing_score = ifelse(home_score<away_score, home_score, away_score)) %>% mutate(margin = winning_score - losing_score, home_winner = ifelse(home_score==winning_score, TRUE, FALSE)) %>% group_by(winning_score, losing_score) %>% summarize(count = n()) 
+
+num_scores = nrow(gami)
+impossible = tibble()
+for (i in 0:300) {
+  temp = tibble(
+    w_score = i,
+    l_score = i:300
+  )
+  impossible = bind_rows(impossible, temp)
+}
+
+high_count <- gami %>% filter(count==max(gami$count))
+
+lwin = min(gami$winning_score) - 1
+llos = min(gami$losing_score) - 1
+mwin = max(gami$winning_score) + 1
+mlos = max(gami$losing_score) + 1
+
+ggplot(data=gami) + aes(x=winning_score, y=losing_score, fill = count) + geom_tile(height=1, width=1)  + scale_fill_gradient(low = "#72c0ed", high="#022438") + geom_tile(data=high_count,aes(x=winning_score, y=losing_score), fill='#39FF14', height=1.5, width=1.5) + theme_classic(base_line_size = 0) + geom_tile(data=impossible, aes(x=w_score, y=l_score), fill='gray') + xlim(75, 160) + ylim(87, 163) + labs(y='Losing Score', x = 'Winning Score', title='NBA SCORIGAMI', fill='COUNT', subtitle=sprintf('%d-%d season: %d games with %d unique scores', season-1, season, num_games, num_scores)) + coord_fixed(ylim = c(mlos, llos), xlim = c(lwin, mwin), expand = FALSE) + scale_x_continuous(breaks = seq(from = lwin, to = mwin, by = 6)) + scale_y_continuous(breaks=seq(from=llos, to=mlos, by=6))
+
+}
+
+create_gami(2002)
+create_gami(2022)
+map(2002:2023, create_gami)
+```
