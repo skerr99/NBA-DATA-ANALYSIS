@@ -89,20 +89,12 @@ def get_season_info(year):
                     
     return season
 
-#print(get_season_info('2023'))
 
 
 seasons_list = []
-error_count = 0
-for x in range(2016,2024):
-    try:
-        seasons_list.append( get_season_info(  x ) )
-        print(f'{x} : SUCCESS !!!')
-    except Exception as error:
-        print(f'{x} : {error}')
-        error_count += 1
-if error_count == 0:
-    print('\n\n100% SUCCESS !!!!!!\n\n')
+
+for x in range(1980,2024):
+    seasons_list.append( get_season_info(  x ) )
 
 df = pd.DataFrame(seasons_list)
-df.to_csv('/Users/seankerr/Downloads/sixth_run.csv')
+df.to_csv('/Users/seankerr/Downloads/nba_per_season.csv')
