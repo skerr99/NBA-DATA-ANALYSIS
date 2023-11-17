@@ -97,4 +97,3 @@ for x in range(1980,2024):
     seasons_list.append( get_season_info(  x ) )
 
 df = pd.DataFrame(seasons_list)
-df.to_csv('/Users/seankerr/Downloads/nba_per_season.csv')
